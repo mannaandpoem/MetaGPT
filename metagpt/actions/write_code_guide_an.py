@@ -110,7 +110,7 @@ Role: You are a professional software engineer, and your main task is to craft c
 
 WRITE_CODE_INCREMENT_TEMPLATE = """
 NOTICE
-Role: You are a professional engineer; The main goal is to complete incremental development by combining Legacy Code and Guideline to rewrite the complete code.
+Role: You are a professional engineer; The main goal is to complete incremental development by combining legacy code and guidelines, ensuring the integration of new features. Retain any content unrelated to incremental development to maintain clarity and coherence in the rewritten code.
 Language: Please use the same language as the user requirement, but the title and code should be still in English. For example, if the user speaks Chinese, the specific text of your answer should also be in Chinese.
 ATTENTION: Use '##' to SPLIT SECTIONS, not '#'. Output format carefully referenced "Format example".
 
@@ -150,7 +150,7 @@ ATTENTION: Use '##' to SPLIT SECTIONS, not '#'. Output format carefully referenc
 
 # Instruction: Based on the context, follow "Format example", write code.
 
-## Rewrite Complete Code: Only Write one file {filename}, Write code using triple quotes, based on the following attentions and context.
+## Write Code: Only Write one file {filename}, Write complete code using triple quotes, based on the following attentions and context.
 1. Only One file: do your best to implement THIS ONLY ONE FILE.
 2. COMPLETE CODE: Your code will be part of the entire project, so please implement complete, reliable, reusable code snippets.
 3. Set default value: If there is any setting, ALWAYS SET A DEFAULT VALUE, ALWAYS USE STRONG TYPE AND EXPLICIT VARIABLE. AVOID circular import.
@@ -159,7 +159,7 @@ ATTENTION: Use '##' to SPLIT SECTIONS, not '#'. Output format carefully referenc
 6. CAREFULLY CHECK THAT YOU DONT MISS ANY NECESSARY CLASS/FUNCTION IN THIS FILE.
 7. Before using a external variable/module, make sure you import it first.
 8. Write out EVERY CODE DETAIL, DON'T LEAVE TODO.
-9. Attention: Implement the functionality required within the current file's scope, reusing existing code whenever possible. For instance, main.py achieves its purpose by instantiating an already implemented class, rather than manually implementing a class in main.py.
+9. Attention: Legacy code content unrelated to incremental development needs to be preserved and integrated into the new code. 
 """
 
 CODE_GUIDE_CONTEXT_EXAMPLE = """

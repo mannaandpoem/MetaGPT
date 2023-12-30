@@ -256,6 +256,8 @@ class Engineer(Role):
         changed_files = Documents()
         # Recode caused by upstream changes.
         for filename in changed_task_files:
+            if filename == "increment.json":
+                continue
             design_doc = await design_file_repo.get(filename)
             task_doc = await task_file_repo.get(filename)
             task_list = self._parse_tasks(task_doc)
