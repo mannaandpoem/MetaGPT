@@ -23,8 +23,9 @@ from metagpt.actions import Action, ActionOutput
 from metagpt.actions.action_node import ActionNode
 from metagpt.actions.fix_bug import FixBug
 from metagpt.actions.write_prd_an import (
+    INCREMENT_NODE,
+    REFINE_PRD_CONTEXT,
     REFINE_PRD_NODE,
-    REFINE_PRD_SIMPLE_CONTEXT,
     WP_IS_RELATIVE_NODE,
     WP_ISSUE_TYPE_NODE,
     WRITE_PRD_NODE,
@@ -76,7 +77,10 @@ class WritePRD(Action):
         # related to the PRD. If they are related, rewrite the PRD.
         docs_file_repo = CONFIG.git_repo.new_file_repository(relative_path=DOCS_FILE_REPO)
         requirement_doc = await docs_file_repo.get(filename=REQUIREMENT_FILENAME)
-        if requirement_doc and await self._is_bugfix(requirement_doc.content):
+
+        repair_type = await self._issue_classify(requirement_doc.content) if requirement_doc else None
+
+        if repair_type == "BUG":
             await docs_file_repo.save(filename=BUGFIX_FILENAME, content=requirement_doc.content)
             await docs_file_repo.save(filename=REQUIREMENT_FILENAME, content="")
             bug_fix = BugFixContext(filename=BUGFIX_FILENAME)
@@ -94,9 +98,15 @@ class WritePRD(Action):
         prds_file_repo = CONFIG.git_repo.new_file_repository(PRDS_FILE_REPO)
         prd_docs = await prds_file_repo.get_all()
         change_files = Documents()
+        # Both major and minor repairs are completed in _update_prd
         for prd_doc in prd_docs:
             prd_doc = await self._update_prd(
-                requirement_doc=requirement_doc, prd_doc=prd_doc, prds_file_repo=prds_file_repo, *args, **kwargs
+                requirement_doc=requirement_doc,
+                prd_doc=prd_doc,
+                prds_file_repo=prds_file_repo,
+                repair_type=repair_type,
+                *args,
+                **kwargs,
             )
             if not prd_doc:
                 continue
@@ -105,7 +115,12 @@ class WritePRD(Action):
         # If there is no existing PRD, generate one using 'docs/requirement.txt'.
         if not change_files.docs:
             prd_doc = await self._update_prd(
-                requirement_doc=requirement_doc, prd_doc=None, prds_file_repo=prds_file_repo, *args, **kwargs
+                requirement_doc=requirement_doc,
+                prd_doc=None,
+                prds_file_repo=prds_file_repo,
+                repair_type=repair_type,
+                *args,
+                **kwargs,
             )
             if prd_doc:
                 change_files.docs[prd_doc.filename] = prd_doc
@@ -134,22 +149,39 @@ class WritePRD(Action):
         node = await WP_IS_RELATIVE_NODE.fill(context, self.llm)
         return node.get("is_relative") == "YES"
 
-    async def _merge(self, new_requirement_doc, prd_doc, schema=CONFIG.prompt_schema) -> Document:
+    async def _merge(
+        self, new_requirement_doc, prd_doc, prds_file_repo, repair_type="REFINE", schema=CONFIG.prompt_schema
+    ) -> Document:
         if not CONFIG.project_name:
             CONFIG.project_name = Path(CONFIG.project_path).name
+        if repair_type == "REFINE":
+            prd_increment = await self.get_increment(new_requirement_doc, prd_doc, schema)
+            await prds_file_repo.save(filename="increment.json", content=prd_increment)
+            project_name = CONFIG.project_name if CONFIG.project_name else ""
+            context = REFINE_PRD_CONTEXT.format(
+                requirements=new_requirement_doc.content,
+                prd_increment=prd_increment,
+                old_prd=prd_doc.content,
+                project_name=project_name,
+            )
+            node = await REFINE_PRD_NODE.fill(context=context, llm=self.llm, schema=schema)
+            prd_doc.content = node.instruct_content.json(ensure_ascii=False)
+            await self._rename_workspace(node)
 
-        project_name = CONFIG.project_name if CONFIG.project_name else ""
-        prompt = REFINE_PRD_SIMPLE_CONTEXT.format(
-            requirements=new_requirement_doc.content,
-            old_prd=prd_doc.content,
-            project_name=project_name,
-        )
-        node = await REFINE_PRD_NODE.fill(context=prompt, llm=self.llm, schema=schema)
-        prd_doc.content = node.instruct_content.json(ensure_ascii=False)
-        await self._rename_workspace(node)
+        elif repair_type == "OVERHAUL":
+            raise NotImplementedError
+
         return prd_doc
 
-    async def _update_prd(self, requirement_doc, prd_doc, prds_file_repo, *args, **kwargs) -> Document | None:
+    async def get_increment(self, new_requirement_doc, prd_doc, schema) -> str:
+        prompt = NEW_REQ_TEMPLATE.format(requirements=new_requirement_doc.content, old_prd=prd_doc.content)
+        node = await INCREMENT_NODE.fill(context=prompt, llm=self.llm, schema=schema)
+        prd_increment = node.instruct_content.json(ensure_ascii=False)
+        return prd_increment
+
+    async def _update_prd(
+        self, requirement_doc, prd_doc, prds_file_repo, repair_type, *args, **kwargs
+    ) -> Document | None:
         if not prd_doc:
             prd = await self._run_new_requirement(
                 requirements=[requirement_doc.content if requirement_doc else ""], *args, **kwargs
@@ -159,8 +191,8 @@ class WritePRD(Action):
                 filename=FileRepository.new_filename() + ".json",
                 content=prd.instruct_content.json(ensure_ascii=False),
             )
-        elif await self._is_relative(requirement_doc, prd_doc):
-            new_prd_doc = await self._merge(requirement_doc, prd_doc)
+        elif repair_type == "REFINE":
+            new_prd_doc = await self._merge(requirement_doc, prd_doc, prds_file_repo, repair_type)
         else:
             return None
         await prds_file_repo.save(filename=new_prd_doc.filename, content=new_prd_doc.content)
@@ -208,3 +240,13 @@ class WritePRD(Action):
             return False
         node = await WP_ISSUE_TYPE_NODE.fill(context, self.llm)
         return node.get("issue_type") == "BUG"
+
+    async def _issue_classify(self, context) -> str:
+        # classify issue: bug_fix or refine or overhaul
+        node = await WP_ISSUE_TYPE_NODE.fill(context, self.llm)
+        if node.get("issue_type") == "BUG":
+            return "BUG"
+        elif node.get("issue_type") == "REFINE":
+            return "REFINE"
+        else:
+            return "OVERHAUL"

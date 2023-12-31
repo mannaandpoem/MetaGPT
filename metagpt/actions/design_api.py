@@ -16,11 +16,19 @@ from typing import Optional
 from pydantic import Field
 
 from metagpt.actions import Action, ActionOutput
-from metagpt.actions.design_api_an import DESIGN_API_NODE, REFINE_DESIGN_NODES
+from metagpt.actions.design_api_an import (
+    DESIGN_API_NODE,
+    INC_DESIGN_CONTEXT,
+    INC_DESIGN_NODES,
+    REFINE_DESIGN_CONTEXT,
+    REFINE_DESIGN_NODES,
+)
 from metagpt.config import CONFIG
 from metagpt.const import (
     DATA_API_DESIGN_FILE_REPO,
+    DOCS_FILE_REPO,
     PRDS_FILE_REPO,
+    REQUIREMENT_FILENAME,
     SEQ_FLOW_FILE_REPO,
     SYSTEM_DESIGN_FILE_REPO,
     SYSTEM_DESIGN_PDF_FILE_REPO,
@@ -63,6 +71,8 @@ class WriteDesign(Action):
         # For those PRDs and design documents that have undergone changes, regenerate the design content.
         changed_files = Documents()
         for filename in changed_prds.keys():
+            if filename == "increment.json":
+                continue
             doc = await self._update_system_design(
                 filename=filename, prds_file_repo=prds_file_repo, system_design_file_repo=system_design_file_repo
             )
@@ -85,14 +95,32 @@ class WriteDesign(Action):
         node = await DESIGN_API_NODE.fill(context=context, llm=self.llm, schema=schema)
         return node
 
-    async def _merge(self, prd_doc, system_design_doc, schema=CONFIG.prompt_schema):
-        context = NEW_REQ_TEMPLATE.format(old_design=system_design_doc.content, context=prd_doc.content)
+    async def _merge(self, prd_doc, system_design_file_repo, prd_increment, schema=CONFIG.prompt_schema):
+        docs_file_repo = CONFIG.git_repo.new_file_repository(DOCS_FILE_REPO)
+        requirement_doc = await docs_file_repo.get(REQUIREMENT_FILENAME)
+        system_design_doc = await system_design_file_repo.get(prd_doc.filename)
+        design_increment = await self.get_increment(prd_increment, system_design_doc, requirement_doc)
+        await system_design_file_repo.save(filename="increment.json", content=design_increment)
+        context = REFINE_DESIGN_CONTEXT.format(
+            requirements=requirement_doc.content,
+            old_design=system_design_doc.content,
+            design_increment=design_increment,
+        )
         node = await REFINE_DESIGN_NODES.fill(context=context, llm=self.llm, schema=schema)
         system_design_doc.content = node.instruct_content.json(ensure_ascii=False)
         return system_design_doc
 
+    async def get_increment(self, prd_increment, system_design_doc, requirement_doc):
+        context = INC_DESIGN_CONTEXT.format(
+            old_design=system_design_doc.content, requirements=requirement_doc.content, prd_increment=prd_increment
+        )
+        inc_node = await INC_DESIGN_NODES.fill(context=context, llm=self.llm)
+        design_increment = inc_node.instruct_content.json(ensure_ascii=False)
+        return design_increment
+
     async def _update_system_design(self, filename, prds_file_repo, system_design_file_repo) -> Document:
         prd = await prds_file_repo.get(filename)
+        prd_increment = await prds_file_repo.get("increment.json")
         old_system_design_doc = await system_design_file_repo.get(filename)
         if not old_system_design_doc:
             system_design = await self._new_system_design(context=prd.content)
@@ -102,7 +130,10 @@ class WriteDesign(Action):
                 content=system_design.instruct_content.json(ensure_ascii=False),
             )
         else:
-            doc = await self._merge(prd_doc=prd, system_design_doc=old_system_design_doc)
+            # Default refine
+            doc = await self._merge(
+                prd_doc=prd, system_design_file_repo=system_design_file_repo, prd_increment=prd_increment
+            )
         await system_design_file_repo.save(
             filename=filename, content=doc.content, dependencies={prd.root_relative_path}
         )
