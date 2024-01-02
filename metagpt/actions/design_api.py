@@ -103,6 +103,7 @@ class WriteDesign(Action):
         await system_design_file_repo.save(filename="increment.json", content=design_increment)
         context = REFINE_DESIGN_CONTEXT.format(
             requirements=requirement_doc.content,
+            prd=prd_doc.content,
             old_design=system_design_doc.content,
             design_increment=design_increment,
         )

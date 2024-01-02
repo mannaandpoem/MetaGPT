@@ -92,7 +92,10 @@ class WriteTasks(Action):
         if task_doc:
             # Default refine
             task_doc = await self._merge(
-                design_increment=design_increment, task_doc=task_doc, tasks_file_repo=tasks_file_repo
+                system_design_doc=system_design_doc,
+                design_increment=design_increment,
+                task_doc=task_doc,
+                tasks_file_repo=tasks_file_repo,
             )
         else:
             rsp = await self._run_new_tasks(context=system_design_doc.content)
@@ -113,14 +116,19 @@ class WriteTasks(Action):
         # rsp = await self._aask_v1(prompt, "task", OUTPUT_MAPPING, format=format)
         return node
 
-    async def _merge(self, design_increment, task_doc, tasks_file_repo, schema=CONFIG.prompt_schema) -> Document:
+    async def _merge(
+        self, system_design_doc, design_increment, task_doc, tasks_file_repo, schema=CONFIG.prompt_schema
+    ) -> Document:
         docs_file_repo = CONFIG.git_repo.new_file_repository(DOCS_FILE_REPO)
         requirement_doc = await docs_file_repo.get(REQUIREMENT_FILENAME)
 
         tasks_increment = await self.get_increment(design_increment, requirement_doc, task_doc)
         await tasks_file_repo.save(filename="increment.json", content=tasks_increment)
         context = REFINE_PM_CONTEXT.format(
-            requirements=requirement_doc.content, old_tasks=task_doc.content, tasks_increment=tasks_increment
+            requirements=requirement_doc.content,
+            design=system_design_doc.content,
+            old_tasks=task_doc.content,
+            tasks_increment=tasks_increment,
         )
         node = await REFINE_PM_NODES.fill(context, self.llm, schema)
         task_doc.content = node.instruct_content.json(ensure_ascii=False)

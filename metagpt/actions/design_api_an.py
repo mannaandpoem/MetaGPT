@@ -49,7 +49,7 @@ FILE_LIST = ActionNode(
 REFINE_FILE_LIST = ActionNode(
     key="File List",
     expected_type=List[str],
-    instruction="Update and expand the original file list, including only relative paths. "
+    instruction="Update and expand the original file list, including only relative paths. Only output filename!Do not include comments in the list."
     "Ensure that the refined file list reflects the evolving structure of the project due to incremental development.",
     example=["main.py", "game.py", "utils.py", "new_feature.py"],
 )
@@ -125,6 +125,9 @@ Based on new requirements, review and refine the system design. Integrate existi
 
 ### New Requirements
 {requirements}
+
+### PRD
+{prd}
 
 ### Legacy Content
 {old_design}
