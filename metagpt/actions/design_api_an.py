@@ -9,7 +9,7 @@ from typing import List
 
 from metagpt.actions.action_node import ActionNode
 from metagpt.logs import logger
-from metagpt.utils.mermaid import MMC1, MMC1_INC_AND_REFINE, MMC2
+from metagpt.utils.mermaid import MMC1, MMC1_INC_AND_REFINE, MMC2, MMC2_INC
 
 IMPLEMENTATION_APPROACH = ActionNode(
     key="Implementation approach",
@@ -34,7 +34,6 @@ REFINE_IMPLEMENTATION_APPROACH = ActionNode(
     "etain any content unrelated to incremental development for coherence and clarity.",
     example="We will refine ...",
 )
-
 
 PROJECT_NAME = ActionNode(
     key="Project name", expected_type=str, instruction="The project name with underline", example="game_2048"
@@ -93,6 +92,15 @@ PROGRAM_CALL_FLOW = ActionNode(
     example=MMC2,
 )
 
+REFINE_PROGRAM_CALL_FLOW = ActionNode(
+    key="Program call flow",
+    expected_type=str,
+    instruction="Extend the existing sequenceDiagram code syntax with detailed information, accurately covering the"
+    "CRUD and initialization of each object. Ensure correct syntax usage and reflect the incremental changes introduced"
+    "in the classes and API defined above.Retain content unrelated to incremental development for coherence and clarity",
+    example=MMC2_INC,
+)
+
 ANYTHING_UNCLEAR = ActionNode(
     key="Anything UNCLEAR",
     expected_type=str,
@@ -134,14 +142,14 @@ NODES = [
     ANYTHING_UNCLEAR,
 ]
 
-INC_NODES = [INC_IMPLEMENTATION_APPROACH, INC_DATA_STRUCTURES_AND_INTERFACES]
+INC_NODES = [INC_IMPLEMENTATION_APPROACH, INC_DATA_STRUCTURES_AND_INTERFACES, REFINE_PROGRAM_CALL_FLOW]
 
 REFINE_NODES = [
     REFINE_IMPLEMENTATION_APPROACH,
     # PROJECT_NAME,
     REFINE_FILE_LIST,
     REFINE_DATA_STRUCTURES_AND_INTERFACES,
-    PROGRAM_CALL_FLOW,
+    REFINE_PROGRAM_CALL_FLOW,
     ANYTHING_UNCLEAR,
 ]
 
