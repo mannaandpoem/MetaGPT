@@ -28,9 +28,13 @@ def test_refined_simple_calculator():
         project_path,
     ]
     result = runner.invoke(app, args)
-    os.system("git tag refine")
     logger.info(result)
     logger.info(result.output)
+    if "Aborting" in result.output:
+        assert False
+    else:
+        os.system("git tag refine")
+        assert True
 
 
 def test_refined_number_guessing_game():
@@ -44,9 +48,13 @@ def test_refined_number_guessing_game():
         project_path,
     ]
     result = runner.invoke(app, args)
-    os.system("git tag refine")
     logger.info(result)
     logger.info(result.output)
+    if "Aborting" in result.output:
+        assert False
+    else:
+        os.system("git tag refine")
+        assert True
 
 
 def test_refined_dice_simulator_1():
@@ -58,12 +66,15 @@ def test_refined_dice_simulator_1():
         "--inc",
         "--project-path",
         project_path,
-        "--no-code-review",
     ]
     result = runner.invoke(app, args)
-    os.system("git tag refine_1")
     logger.info(result)
     logger.info(result.output)
+    if "Aborting" in result.output:
+        assert False
+    else:
+        os.system("git tag refine_1")
+        assert True
 
 
 def test_refined_dice_simulator_2():
@@ -75,12 +86,15 @@ def test_refined_dice_simulator_2():
         "--inc",
         "--project-path",
         project_path,
-        "--no-code-review",
     ]
     result = runner.invoke(app, args)
-    os.system("git tag refine_2")
     logger.info(result)
     logger.info(result.output)
+    if "Aborting" in result.output:
+        assert False
+    else:
+        os.system("git tag refine_2")
+        assert True
 
 
 def test_refined_dice_simulator_3():
@@ -92,12 +106,15 @@ def test_refined_dice_simulator_3():
         "--inc",
         "--project-path",
         project_path,
-        "--no-code-review",
     ]
     result = runner.invoke(app, args)
-    os.system("git tag refine_3")
     logger.info(result)
     logger.info(result.output)
+    if "Aborting" in result.output:
+        assert False
+    else:
+        os.system("git tag refine_3")
+        assert True
 
 
 def test_refined_pygame_2048_1():
@@ -111,9 +128,13 @@ def test_refined_pygame_2048_1():
         project_path,
     ]
     result = runner.invoke(app, args)
-    os.system("git tag refine_1")
     logger.info(result)
     logger.info(result.output)
+    if "Aborting" in result.output:
+        assert False
+    else:
+        os.system("git tag refine_1")
+        assert True
 
 
 def test_refined_pygame_2048_2():
@@ -127,9 +148,13 @@ def test_refined_pygame_2048_2():
         project_path,
     ]
     result = runner.invoke(app, args)
-    os.system("git tag refine_2")
     logger.info(result)
     logger.info(result.output)
+    if "Aborting" in result.output:
+        assert False
+    else:
+        os.system("git tag refine_2")
+        assert True
 
 
 def test_refined_pygame_2048_3():
@@ -143,9 +168,13 @@ def test_refined_pygame_2048_3():
         project_path,
     ]
     result = runner.invoke(app, args)
-    os.system("git tag refine_3")
     logger.info(result)
     logger.info(result.output)
+    if "Aborting" in result.output:
+        assert False
+    else:
+        os.system("git tag refine_3")
+        assert True
 
 
 def test_refined_word_cloud_1():
@@ -159,9 +188,13 @@ def test_refined_word_cloud_1():
         project_path,
     ]
     result = runner.invoke(app, args)
-    os.system("git tag refine_1")
     logger.info(result)
     logger.info(result.output)
+    if "Aborting" in result.output:
+        assert False
+    else:
+        os.system("git tag refine_1")
+        assert True
 
 
 def test_refined_word_cloud_2():
@@ -175,9 +208,13 @@ def test_refined_word_cloud_2():
         project_path,
     ]
     result = runner.invoke(app, args)
-    os.system("git tag refine_2")
     logger.info(result)
     logger.info(result.output)
+    if "Aborting" in result.output:
+        assert False
+    else:
+        os.system("git tag refine_2")
+        assert True
 
 
 def check_or_create_base_tag(project_path):
