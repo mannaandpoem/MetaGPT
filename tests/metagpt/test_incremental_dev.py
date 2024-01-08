@@ -34,16 +34,13 @@ def test_refined_simple_calculator():
     if "Aborting" in result.output:
         assert False
     else:
-        is_base_tag = subprocess.run(
-            ["git", "show-ref", "--verify", "--quiet", "refs/tags/base"], capture_output=True, text=True, check=True
-        )
-        # Check if the current submission is a "base" tag,
-        if is_base_tag:
+        tag = subprocess.run(["git", "describe", "--tags"], capture_output=True, text=True).stdout.strip()
+        if tag == "base":
             assert False
         else:
             assert True
             try:
-                subprocess.run(["git", "tag", "refine"], check=True)
+                subprocess.run(["git", "tag", "refine_2"], check=True)
             except subprocess.CalledProcessError as e:
                 raise e
 
@@ -64,10 +61,35 @@ def test_refined_number_guessing_game():
     if "Aborting" in result.output:
         assert False
     else:
-        is_base_tag = subprocess.run(
-            ["git", "show-ref", "--verify", "--quiet", "refs/tags/base"], capture_output=True, text=True, check=True
-        )
-        if is_base_tag:
+        tag = subprocess.run(["git", "describe", "--tags"], capture_output=True, text=True).stdout.strip()
+        if tag == "base":
+            assert False
+        else:
+            assert True
+            try:
+                subprocess.run(["git", "tag", "refine_2"], check=True)
+            except subprocess.CalledProcessError as e:
+                raise e
+
+
+def test_refined_word_cloud():
+    project_path = f"{DATA_PATH}/word_cloud"
+    check_or_create_base_tag(project_path)
+
+    args = [
+        "Add a feature to remove deprecated words from the word cloud. The current word cloud generator does not support removing deprecated words. Now, The word cloud generator should support removing deprecated words. Customize deactivated words to exclude them from word cloud. Let users see all the words in the text file, and allow users to select the words they want to remove.",
+        "--inc",
+        "--project-path",
+        project_path,
+    ]
+    result = runner.invoke(app, args)
+    logger.info(result)
+    logger.info(result.output)
+    if "Aborting" in result.output:
+        assert False
+    else:
+        tag = subprocess.run(["git", "describe", "--tags"], capture_output=True, text=True).stdout.strip()
+        if tag == "base":
             assert False
         else:
             assert True
@@ -93,15 +115,13 @@ def test_refined_dice_simulator_1():
     if "Aborting" in result.output:
         assert False
     else:
-        is_base_tag = subprocess.run(
-            ["git", "show-ref", "--verify", "--quiet", "refs/tags/base"], capture_output=True, text=True, check=True
-        )
-        if is_base_tag:
+        tag = subprocess.run(["git", "describe", "--tags"], capture_output=True, text=True).stdout.strip()
+        if tag == "base":
             assert False
         else:
             assert True
             try:
-                subprocess.run(["git", "tag", "refine_1"], check=True)
+                subprocess.run(["git", "tag", "refine_2"], check=True)
             except subprocess.CalledProcessError as e:
                 raise e
 
@@ -122,10 +142,8 @@ def test_refined_dice_simulator_2():
     if "Aborting" in result.output:
         assert False
     else:
-        is_base_tag = subprocess.run(
-            ["git", "show-ref", "--verify", "--quiet", "refs/tags/base"], capture_output=True, text=True, check=True
-        )
-        if is_base_tag:
+        tag = subprocess.run(["git", "describe", "--tags"], capture_output=True, text=True).stdout.strip()
+        if tag == "base":
             assert False
         else:
             assert True
@@ -151,15 +169,13 @@ def test_refined_dice_simulator_3():
     if "Aborting" in result.output:
         assert False
     else:
-        is_base_tag = subprocess.run(
-            ["git", "show-ref", "--verify", "--quiet", "refs/tags/base"], capture_output=True, text=True, check=True
-        )
-        if is_base_tag:
+        tag = subprocess.run(["git", "describe", "--tags"], capture_output=True, text=True).stdout.strip()
+        if tag == "base":
             assert False
         else:
             assert True
             try:
-                subprocess.run(["git", "tag", "refine_3"], check=True)
+                subprocess.run(["git", "tag", "refine_2"], check=True)
             except subprocess.CalledProcessError as e:
                 raise e
 
@@ -180,15 +196,13 @@ def test_refined_pygame_2048_1():
     if "Aborting" in result.output:
         assert False
     else:
-        is_base_tag = subprocess.run(
-            ["git", "show-ref", "--verify", "--quiet", "refs/tags/base"], capture_output=True, text=True, check=True
-        )
-        if is_base_tag:
+        tag = subprocess.run(["git", "describe", "--tags"], capture_output=True, text=True).stdout.strip()
+        if tag == "base":
             assert False
         else:
             assert True
             try:
-                subprocess.run(["git", "tag", "refine_1"], check=True)
+                subprocess.run(["git", "tag", "refine_2"], check=True)
             except subprocess.CalledProcessError as e:
                 raise e
 
@@ -209,10 +223,8 @@ def test_refined_pygame_2048_2():
     if "Aborting" in result.output:
         assert False
     else:
-        is_base_tag = subprocess.run(
-            ["git", "show-ref", "--verify", "--quiet", "refs/tags/base"], capture_output=True, text=True, check=True
-        )
-        if is_base_tag:
+        tag = subprocess.run(["git", "describe", "--tags"], capture_output=True, text=True).stdout.strip()
+        if tag == "base":
             assert False
         else:
             assert True
@@ -238,68 +250,8 @@ def test_refined_pygame_2048_3():
     if "Aborting" in result.output:
         assert False
     else:
-        is_base_tag = subprocess.run(
-            ["git", "show-ref", "--verify", "--quiet", "refs/tags/base"], capture_output=True, text=True, check=True
-        )
-        if is_base_tag:
-            assert False
-        else:
-            assert True
-            try:
-                subprocess.run(["git", "tag", "refine_3"], check=True)
-            except subprocess.CalledProcessError as e:
-                raise e
-
-
-def test_refined_word_cloud_1():
-    project_path = f"{DATA_PATH}/word_cloud"
-    check_or_create_base_tag(project_path)
-
-    args = [
-        "Add a feature to remove deprecated words from the word cloud. The current word cloud generator does not support removing deprecated words. Now, The word cloud generator should support removing deprecated words. Customize deactivated words to exclude them from word cloud. Let users see all the words in the text file, and allow users to select the words they want to remove.",
-        "--inc",
-        "--project-path",
-        project_path,
-    ]
-    result = runner.invoke(app, args)
-    logger.info(result)
-    logger.info(result.output)
-    if "Aborting" in result.output:
-        assert False
-    else:
-        is_base_tag = subprocess.run(
-            ["git", "show-ref", "--verify", "--quiet", "refs/tags/base"], capture_output=True, text=True, check=True
-        )
-        if is_base_tag:
-            assert False
-        else:
-            assert True
-            try:
-                subprocess.run(["git", "tag", "refine_1"], check=True)
-            except subprocess.CalledProcessError as e:
-                raise e
-
-
-def test_refined_word_cloud_2():
-    project_path = f"{DATA_PATH}/word_cloud"
-    check_or_create_base_tag(project_path)
-
-    args = [
-        "Add a feature to customize the resolution of the word cloud.The new version allows users to customize the size and resolution of the generated word cloud after uploading a text file, and then generate the word cloud.",
-        "--inc",
-        "--project-path",
-        project_path,
-    ]
-    result = runner.invoke(app, args)
-    logger.info(result)
-    logger.info(result.output)
-    if "Aborting" in result.output:
-        assert False
-    else:
-        is_base_tag = subprocess.run(
-            ["git", "show-ref", "--verify", "--quiet", "refs/tags/base"], capture_output=True, text=True, check=True
-        )
-        if is_base_tag:
+        tag = subprocess.run(["git", "describe", "--tags"], capture_output=True, text=True).stdout.strip()
+        if tag == "base":
             assert False
         else:
             assert True
