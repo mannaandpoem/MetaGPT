@@ -16,11 +16,10 @@ from typing import Optional
 import pytest
 
 from metagpt.config import CONFIG, Config
-from metagpt.const import DEFAULT_WORKSPACE_ROOT, TEST_DATA_PATH
+from metagpt.const import TEST_DATA_PATH
 from metagpt.llm import LLM
 from metagpt.logs import logger
 from metagpt.provider.openai_api import OpenAILLM
-from metagpt.utils.git_repository import GitRepository
 
 
 class MockLLM(OpenAILLM):
@@ -151,17 +150,17 @@ def loguru_caplog(caplog):
 
 
 # init & dispose git repo
-@pytest.fixture(scope="session", autouse=True)
-def setup_and_teardown_git_repo(request):
-    CONFIG.git_repo = GitRepository(local_path=DEFAULT_WORKSPACE_ROOT / "unittest")
-    CONFIG.git_reinit = True
-
-    # Destroy git repo at the end of the test session.
-    def fin():
-        CONFIG.git_repo.delete_repository()
-
-    # Register the function for destroying the environment.
-    request.addfinalizer(fin)
+# @pytest.fixture(scope="session", autouse=True)
+# def setup_and_teardown_git_repo(request):
+#     CONFIG.git_repo = GitRepository(local_path=DEFAULT_WORKSPACE_ROOT / "unittest")
+#     CONFIG.git_reinit = True
+#
+#     # Destroy git repo at the end of the test session.
+#     def fin():
+#         CONFIG.git_repo.delete_repository()
+#
+#     # Register the function for destroying the environment.
+#     request.addfinalizer(fin)
 
 
 @pytest.fixture(scope="session", autouse=True)
