@@ -6,6 +6,7 @@
 @File    : test_incremental_dev.py
 """
 import os
+import subprocess
 
 import pytest
 from typer.testing import CliRunner
@@ -33,8 +34,18 @@ def test_refined_simple_calculator():
     if "Aborting" in result.output:
         assert False
     else:
-        os.system("git tag refine")
-        assert True
+        is_base_tag = subprocess.run(
+            ["git", "show-ref", "--verify", "--quiet", "refs/tags/base"], capture_output=True, text=True, check=True
+        )
+        # Check if the current submission is a "base" tag,
+        if is_base_tag:
+            assert False
+        else:
+            assert True
+            try:
+                subprocess.run(["git", "tag", "refine"], check=True)
+            except subprocess.CalledProcessError as e:
+                raise e
 
 
 def test_refined_number_guessing_game():
@@ -53,8 +64,17 @@ def test_refined_number_guessing_game():
     if "Aborting" in result.output:
         assert False
     else:
-        os.system("git tag refine")
-        assert True
+        is_base_tag = subprocess.run(
+            ["git", "show-ref", "--verify", "--quiet", "refs/tags/base"], capture_output=True, text=True, check=True
+        )
+        if is_base_tag:
+            assert False
+        else:
+            assert True
+            try:
+                subprocess.run(["git", "tag", "refine"], check=True)
+            except subprocess.CalledProcessError as e:
+                raise e
 
 
 def test_refined_dice_simulator_1():
@@ -73,8 +93,17 @@ def test_refined_dice_simulator_1():
     if "Aborting" in result.output:
         assert False
     else:
-        os.system("git tag refine_1")
-        assert True
+        is_base_tag = subprocess.run(
+            ["git", "show-ref", "--verify", "--quiet", "refs/tags/base"], capture_output=True, text=True, check=True
+        )
+        if is_base_tag:
+            assert False
+        else:
+            assert True
+            try:
+                subprocess.run(["git", "tag", "refine_1"], check=True)
+            except subprocess.CalledProcessError as e:
+                raise e
 
 
 def test_refined_dice_simulator_2():
@@ -93,8 +122,17 @@ def test_refined_dice_simulator_2():
     if "Aborting" in result.output:
         assert False
     else:
-        os.system("git tag refine_2")
-        assert True
+        is_base_tag = subprocess.run(
+            ["git", "show-ref", "--verify", "--quiet", "refs/tags/base"], capture_output=True, text=True, check=True
+        )
+        if is_base_tag:
+            assert False
+        else:
+            assert True
+            try:
+                subprocess.run(["git", "tag", "refine_2"], check=True)
+            except subprocess.CalledProcessError as e:
+                raise e
 
 
 def test_refined_dice_simulator_3():
@@ -113,8 +151,17 @@ def test_refined_dice_simulator_3():
     if "Aborting" in result.output:
         assert False
     else:
-        os.system("git tag refine_3")
-        assert True
+        is_base_tag = subprocess.run(
+            ["git", "show-ref", "--verify", "--quiet", "refs/tags/base"], capture_output=True, text=True, check=True
+        )
+        if is_base_tag:
+            assert False
+        else:
+            assert True
+            try:
+                subprocess.run(["git", "tag", "refine_3"], check=True)
+            except subprocess.CalledProcessError as e:
+                raise e
 
 
 def test_refined_pygame_2048_1():
@@ -133,8 +180,17 @@ def test_refined_pygame_2048_1():
     if "Aborting" in result.output:
         assert False
     else:
-        os.system("git tag refine_1")
-        assert True
+        is_base_tag = subprocess.run(
+            ["git", "show-ref", "--verify", "--quiet", "refs/tags/base"], capture_output=True, text=True, check=True
+        )
+        if is_base_tag:
+            assert False
+        else:
+            assert True
+            try:
+                subprocess.run(["git", "tag", "refine_1"], check=True)
+            except subprocess.CalledProcessError as e:
+                raise e
 
 
 def test_refined_pygame_2048_2():
@@ -153,8 +209,17 @@ def test_refined_pygame_2048_2():
     if "Aborting" in result.output:
         assert False
     else:
-        os.system("git tag refine_2")
-        assert True
+        is_base_tag = subprocess.run(
+            ["git", "show-ref", "--verify", "--quiet", "refs/tags/base"], capture_output=True, text=True, check=True
+        )
+        if is_base_tag:
+            assert False
+        else:
+            assert True
+            try:
+                subprocess.run(["git", "tag", "refine_2"], check=True)
+            except subprocess.CalledProcessError as e:
+                raise e
 
 
 def test_refined_pygame_2048_3():
@@ -173,8 +238,17 @@ def test_refined_pygame_2048_3():
     if "Aborting" in result.output:
         assert False
     else:
-        os.system("git tag refine_3")
-        assert True
+        is_base_tag = subprocess.run(
+            ["git", "show-ref", "--verify", "--quiet", "refs/tags/base"], capture_output=True, text=True, check=True
+        )
+        if is_base_tag:
+            assert False
+        else:
+            assert True
+            try:
+                subprocess.run(["git", "tag", "refine_3"], check=True)
+            except subprocess.CalledProcessError as e:
+                raise e
 
 
 def test_refined_word_cloud_1():
@@ -193,8 +267,17 @@ def test_refined_word_cloud_1():
     if "Aborting" in result.output:
         assert False
     else:
-        os.system("git tag refine_1")
-        assert True
+        is_base_tag = subprocess.run(
+            ["git", "show-ref", "--verify", "--quiet", "refs/tags/base"], capture_output=True, text=True, check=True
+        )
+        if is_base_tag:
+            assert False
+        else:
+            assert True
+            try:
+                subprocess.run(["git", "tag", "refine_1"], check=True)
+            except subprocess.CalledProcessError as e:
+                raise e
 
 
 def test_refined_word_cloud_2():
@@ -213,8 +296,17 @@ def test_refined_word_cloud_2():
     if "Aborting" in result.output:
         assert False
     else:
-        os.system("git tag refine_2")
-        assert True
+        is_base_tag = subprocess.run(
+            ["git", "show-ref", "--verify", "--quiet", "refs/tags/base"], capture_output=True, text=True, check=True
+        )
+        if is_base_tag:
+            assert False
+        else:
+            assert True
+            try:
+                subprocess.run(["git", "tag", "refine_2"], check=True)
+            except subprocess.CalledProcessError as e:
+                raise e
 
 
 def check_or_create_base_tag(project_path):
@@ -222,47 +314,47 @@ def check_or_create_base_tag(project_path):
     os.chdir(project_path)
 
     # Initialize a Git repository
-    os.system("git init")
+    subprocess.run(["git", "init"], check=True)
 
     # Check if the 'base' tag exists
-    check_base_tag_cmd = "git show-ref --verify --quiet refs/tags/base"
-    has_base_tag = os.system(check_base_tag_cmd) == 0
+    check_base_tag_cmd = ["git", "show-ref", "--verify", "--quiet", "refs/tags/base"]
+    has_base_tag = subprocess.run(check_base_tag_cmd, check=True, capture_output=True, text=True)
 
     if has_base_tag:
         logger.info("Base tag exists")
         # Switch to the 'base' branch if it exists
-        stash_cmd = "git stash"
-        switch_to_base_branch_cmd = "git checkout base"
+        stash_cmd = ["git", "stash"]
+        switch_to_base_branch_cmd = ["git", "checkout", "-f", "base"]
         try:
-            os.system(stash_cmd)
-            os.system(switch_to_base_branch_cmd)
+            subprocess.run(stash_cmd, check=True)
+            subprocess.run(switch_to_base_branch_cmd, check=True)
             logger.info("Switched to base branch")
         except Exception as e:
-            logger.info("Failed to switch to base branch")
+            logger.error("Failed to switch to base branch")
             raise e
 
     else:
         logger.info("Base tag doesn't exist.")
         # Add and commit the current code if 'base' tag doesn't exist
-        add_cmd = "git add ."
-        commit_cmd = 'git commit -m "Initial commit"'
+        add_cmd = ["git", "add", "."]
+        commit_cmd = ["git", "commit", "-m", "Initial commit"]
         try:
-            os.system(add_cmd)
-            os.system(commit_cmd)
+            subprocess.run(add_cmd, check=True)
+            subprocess.run(commit_cmd, check=True)
             logger.info("Added and committed all files with the message 'Initial commit'.")
         except Exception as e:
-            logger.info("Failed to add and commit all files.")
+            logger.error("Failed to add and commit all files.")
             raise e
 
         # Add 'base' tag
-        add_base_tag_cmd = "git tag base"
+        add_base_tag_cmd = ["git", "tag", "base"]
 
         # Check if the 'git tag' command was successful
         try:
-            os.system(add_base_tag_cmd)
+            subprocess.run(add_base_tag_cmd, check=True)
             logger.info("Added 'base' tag.")
         except Exception as e:
-            logger.info("Failed to add 'base' tag.")
+            logger.error("Failed to add 'base' tag.")
             raise e
 
 
