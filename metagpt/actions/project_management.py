@@ -13,29 +13,19 @@
 import json
 from typing import Optional
 
-from pydantic import Field
-
 from metagpt.actions import ActionOutput
 from metagpt.actions.action import Action
-from metagpt.actions.project_management_an import (
-    INC_PM_CONTEXT,
-    INC_PM_NODES,
-    PM_NODE,
-    REFINE_PM_CONTEXT,
-    REFINE_PM_NODES,
-)
+from metagpt.actions.project_management_an import PM_NODE
+
+# from metagpt.actions.project_management_an import REFINED_PM_NODES
 from metagpt.config import CONFIG
 from metagpt.const import (
-    DOCS_FILE_REPO,
     PACKAGE_REQUIREMENTS_FILENAME,
-    REQUIREMENT_FILENAME,
     SYSTEM_DESIGN_FILE_REPO,
     TASK_FILE_REPO,
     TASK_PDF_FILE_REPO,
 )
-from metagpt.llm import LLM
 from metagpt.logs import logger
-from metagpt.provider.base_gpt_api import BaseGPTAPI
 from metagpt.schema import Document, Documents
 from metagpt.utils.file_repository import FileRepository
 
@@ -51,7 +41,6 @@ NEW_REQ_TEMPLATE = """
 class WriteTasks(Action):
     name: str = "CreateTasks"
     context: Optional[str] = None
-    llm: BaseGPTAPI = Field(default_factory=LLM)
 
     async def run(self, with_messages, schema=CONFIG.prompt_schema):
         system_design_file_repo = CONFIG.git_repo.new_file_repository(SYSTEM_DESIGN_FILE_REPO)
@@ -63,8 +52,6 @@ class WriteTasks(Action):
         # Rewrite the system designs that have undergone changes based on the git head diff under
         # `docs/system_designs/`.
         for filename in changed_system_designs:
-            if filename == "increment.json":
-                continue
             task_doc = await self._update_tasks(
                 filename=filename, system_design_file_repo=system_design_file_repo, tasks_file_repo=tasks_file_repo
             )
@@ -72,7 +59,7 @@ class WriteTasks(Action):
 
         # Rewrite the task files that have undergone changes based on the git head diff under `docs/tasks/`.
         for filename in changed_tasks:
-            if filename in change_files.docs or filename == "increment.json":
+            if filename in change_files.docs:
                 continue
             task_doc = await self._update_tasks(
                 filename=filename, system_design_file_repo=system_design_file_repo, tasks_file_repo=tasks_file_repo
@@ -83,24 +70,17 @@ class WriteTasks(Action):
             logger.info("Nothing has changed.")
         # Wait until all files under `docs/tasks/` are processed before sending the publish_message, leaving room for
         # global optimization in subsequent steps.
-        return ActionOutput(content=change_files.json(), instruct_content=change_files)
+        return ActionOutput(content=change_files.model_dump_json(), instruct_content=change_files)
 
     async def _update_tasks(self, filename, system_design_file_repo, tasks_file_repo):
         system_design_doc = await system_design_file_repo.get(filename)
-        design_increment = await system_design_file_repo.get("increment.json")
         task_doc = await tasks_file_repo.get(filename)
         if task_doc:
-            # Default refine
-            task_doc = await self._merge(
-                system_design_doc=system_design_doc,
-                design_increment=design_increment,
-                task_doc=task_doc,
-                tasks_file_repo=tasks_file_repo,
-            )
+            task_doc = await self._merge(system_design_doc=system_design_doc, task_doc=task_doc)
         else:
             rsp = await self._run_new_tasks(context=system_design_doc.content)
             task_doc = Document(
-                root_path=TASK_FILE_REPO, filename=filename, content=rsp.instruct_content.json(ensure_ascii=False)
+                root_path=TASK_FILE_REPO, filename=filename, content=rsp.instruct_content.model_dump_json()
             )
         await tasks_file_repo.save(
             filename=filename, content=task_doc.content, dependencies={system_design_doc.root_relative_path}
@@ -111,36 +91,14 @@ class WriteTasks(Action):
 
     async def _run_new_tasks(self, context, schema=CONFIG.prompt_schema):
         node = await PM_NODE.fill(context, self.llm, schema)
-        # prompt_template, format_example = get_template(templates, format)
-        # prompt = prompt_template.format(context=context, format_example=format_example)
-        # rsp = await self._aask_v1(prompt, "task", OUTPUT_MAPPING, format=format)
         return node
 
-    async def _merge(
-        self, system_design_doc, design_increment, task_doc, tasks_file_repo, schema=CONFIG.prompt_schema
-    ) -> Document:
-        docs_file_repo = CONFIG.git_repo.new_file_repository(DOCS_FILE_REPO)
-        requirement_doc = await docs_file_repo.get(REQUIREMENT_FILENAME)
-
-        tasks_increment = await self.get_increment(design_increment, requirement_doc, task_doc)
-        await tasks_file_repo.save(filename="increment.json", content=tasks_increment)
-        context = REFINE_PM_CONTEXT.format(
-            requirements=requirement_doc.content,
-            design=system_design_doc.content,
-            old_tasks=task_doc.content,
-            tasks_increment=tasks_increment,
-        )
-        node = await REFINE_PM_NODES.fill(context, self.llm, schema)
-        task_doc.content = node.instruct_content.json(ensure_ascii=False)
+    async def _merge(self, system_design_doc, task_doc, schema=CONFIG.prompt_schema) -> Document:
+        context = NEW_REQ_TEMPLATE.format(context=system_design_doc.content, old_tasks=task_doc.content)
+        # node = await REFINED_PM_NODES.fill(context, self.llm, schema)
+        node = await PM_NODE.fill(context, self.llm, schema)
+        task_doc.content = node.instruct_content.model_dump_json()
         return task_doc
-
-    async def get_increment(self, design_increment, requirement_doc, task_doc):
-        context = INC_PM_CONTEXT.format(
-            requirements=requirement_doc.content, design_increment=design_increment, old_tasks=task_doc.content
-        )
-        node = await INC_PM_NODES.fill(context, self.llm)
-        task_increment = node.instruct_content.json(ensure_ascii=False)
-        return task_increment
 
     @staticmethod
     async def _update_requirements(doc):
@@ -160,9 +118,3 @@ class WriteTasks(Action):
     @staticmethod
     async def _save_pdf(task_doc):
         await FileRepository.save_as(doc=task_doc, with_suffix=".md", relative_path=TASK_PDF_FILE_REPO)
-
-
-class AssignTasks(Action):
-    async def run(self, *args, **kwargs):
-        # Here you should implement the actual action
-        pass

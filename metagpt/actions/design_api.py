@@ -13,29 +13,19 @@ import json
 from pathlib import Path
 from typing import Optional
 
-from pydantic import Field
-
 from metagpt.actions import Action, ActionOutput
-from metagpt.actions.design_api_an import (
-    DESIGN_API_NODE,
-    INC_DESIGN_CONTEXT,
-    INC_DESIGN_NODES,
-    REFINE_DESIGN_CONTEXT,
-    REFINE_DESIGN_NODES,
-)
+from metagpt.actions.design_api_an import DESIGN_API_NODE
+
+# from metagpt.actions.design_api_an import REFINED_DESIGN_NODES
 from metagpt.config import CONFIG
 from metagpt.const import (
     DATA_API_DESIGN_FILE_REPO,
-    DOCS_FILE_REPO,
     PRDS_FILE_REPO,
-    REQUIREMENT_FILENAME,
     SEQ_FLOW_FILE_REPO,
     SYSTEM_DESIGN_FILE_REPO,
     SYSTEM_DESIGN_PDF_FILE_REPO,
 )
-from metagpt.llm import LLM
 from metagpt.logs import logger
-from metagpt.provider.base_gpt_api import BaseGPTAPI
 from metagpt.schema import Document, Documents, Message
 from metagpt.utils.file_repository import FileRepository
 from metagpt.utils.mermaid import mermaid_to_file
@@ -52,7 +42,6 @@ NEW_REQ_TEMPLATE = """
 class WriteDesign(Action):
     name: str = ""
     context: Optional[str] = None
-    llm: BaseGPTAPI = Field(default_factory=LLM)
     desc: str = (
         "Based on the PRD, think about the system design, and design the corresponding APIs, "
         "data structures, library tables, processes, and paths. Please provide your design, feedback "
@@ -60,10 +49,10 @@ class WriteDesign(Action):
     )
 
     async def run(self, with_messages: Message, schema: str = CONFIG.prompt_schema):
-        # Use `git diff` to identify which PRD documents have been modified in the `docs/prds` directory.
+        # Use `git status` to identify which PRD documents have been modified in the `docs/prds` directory.
         prds_file_repo = CONFIG.git_repo.new_file_repository(PRDS_FILE_REPO)
         changed_prds = prds_file_repo.changed_files
-        # Use `git diff` to identify which design documents in the `docs/system_designs` directory have undergone
+        # Use `git status` to identify which design documents in the `docs/system_designs` directory have undergone
         # changes.
         system_design_file_repo = CONFIG.git_repo.new_file_repository(SYSTEM_DESIGN_FILE_REPO)
         changed_system_designs = system_design_file_repo.changed_files
@@ -71,8 +60,6 @@ class WriteDesign(Action):
         # For those PRDs and design documents that have undergone changes, regenerate the design content.
         changed_files = Documents()
         for filename in changed_prds.keys():
-            if filename == "increment.json":
-                continue
             doc = await self._update_system_design(
                 filename=filename, prds_file_repo=prds_file_repo, system_design_file_repo=system_design_file_repo
             )
@@ -89,52 +76,31 @@ class WriteDesign(Action):
             logger.info("Nothing has changed.")
         # Wait until all files under `docs/system_designs/` are processed before sending the publish message,
         # leaving room for global optimization in subsequent steps.
-        return ActionOutput(content=changed_files.json(), instruct_content=changed_files)
+        return ActionOutput(content=changed_files.model_dump_json(), instruct_content=changed_files)
 
     async def _new_system_design(self, context, schema=CONFIG.prompt_schema):
         node = await DESIGN_API_NODE.fill(context=context, llm=self.llm, schema=schema)
         return node
 
-    async def _merge(self, prd_doc, system_design_file_repo, prd_increment, schema=CONFIG.prompt_schema):
-        docs_file_repo = CONFIG.git_repo.new_file_repository(DOCS_FILE_REPO)
-        requirement_doc = await docs_file_repo.get(REQUIREMENT_FILENAME)
-        system_design_doc = await system_design_file_repo.get(prd_doc.filename)
-        design_increment = await self.get_increment(prd_increment, system_design_doc, requirement_doc)
-        await system_design_file_repo.save(filename="increment.json", content=design_increment)
-        context = REFINE_DESIGN_CONTEXT.format(
-            requirements=requirement_doc.content,
-            prd=prd_doc.content,
-            old_design=system_design_doc.content,
-            design_increment=design_increment,
-        )
-        node = await REFINE_DESIGN_NODES.fill(context=context, llm=self.llm, schema=schema)
-        system_design_doc.content = node.instruct_content.json(ensure_ascii=False)
+    async def _merge(self, prd_doc, system_design_doc, schema=CONFIG.prompt_schema):
+        context = NEW_REQ_TEMPLATE.format(old_design=system_design_doc.content, context=prd_doc.content)
+        # node = await REFINED_DESIGN_NODES.fill(context=context, llm=self.llm, schema=schema)
+        node = await DESIGN_API_NODE.fill(context=context, llm=self.llm, schema=schema)
+        system_design_doc.content = node.instruct_content.model_dump_json()
         return system_design_doc
-
-    async def get_increment(self, prd_increment, system_design_doc, requirement_doc):
-        context = INC_DESIGN_CONTEXT.format(
-            old_design=system_design_doc.content, requirements=requirement_doc.content, prd_increment=prd_increment
-        )
-        inc_node = await INC_DESIGN_NODES.fill(context=context, llm=self.llm)
-        design_increment = inc_node.instruct_content.json(ensure_ascii=False)
-        return design_increment
 
     async def _update_system_design(self, filename, prds_file_repo, system_design_file_repo) -> Document:
         prd = await prds_file_repo.get(filename)
-        prd_increment = await prds_file_repo.get("increment.json")
         old_system_design_doc = await system_design_file_repo.get(filename)
         if not old_system_design_doc:
             system_design = await self._new_system_design(context=prd.content)
             doc = Document(
                 root_path=SYSTEM_DESIGN_FILE_REPO,
                 filename=filename,
-                content=system_design.instruct_content.json(ensure_ascii=False),
+                content=system_design.instruct_content.model_dump_json(),
             )
         else:
-            # Default refine
-            doc = await self._merge(
-                prd_doc=prd, system_design_file_repo=system_design_file_repo, prd_increment=prd_increment
-            )
+            doc = await self._merge(prd_doc=prd, system_design_doc=old_system_design_doc)
         await system_design_file_repo.save(
             filename=filename, content=doc.content, dependencies={prd.root_relative_path}
         )
@@ -146,7 +112,7 @@ class WriteDesign(Action):
     @staticmethod
     async def _save_data_api_design(design_doc):
         m = json.loads(design_doc.content)
-        data_api_design = m.get("Data structures and interfaces")
+        data_api_design = m.get("Data structures and interfaces") or m.get("Refined Data structures and interfaces")
         if not data_api_design:
             return
         pathname = CONFIG.git_repo.workdir / DATA_API_DESIGN_FILE_REPO / Path(design_doc.filename).with_suffix("")
@@ -156,7 +122,7 @@ class WriteDesign(Action):
     @staticmethod
     async def _save_seq_flow(design_doc):
         m = json.loads(design_doc.content)
-        seq_flow = m.get("Program call flow")
+        seq_flow = m.get("Program call flow") or m.get("Refined Program call flow")
         if not seq_flow:
             return
         pathname = CONFIG.git_repo.workdir / Path(SEQ_FLOW_FILE_REPO) / Path(design_doc.filename).with_suffix("")
