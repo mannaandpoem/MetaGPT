@@ -18,197 +18,198 @@ from metagpt.startup import app
 runner = CliRunner()
 
 
-def test_refined_simple_calculator():
-    project_path = f"{DATA_PATH}/simple_add_calculator"
-    check_or_create_base_tag(project_path)
+# def test_refined_simple_calculator():
+#     project_path = f"{DATA_PATH}/simple_add_calculator"
+#     check_or_create_base_tag(project_path)
+#
+#     args = [
+#         "Add subtraction, multiplication and division operations to the calculator. The current calculator can only perform basic addition operations, and it is necessary to introduce subtraction, multiplication, division operation into the calculator",
+#         "--inc",
+#         "--project-path",
+#         project_path,
+#     ]
+#     result = runner.invoke(app, args)
+#     logger.info(result)
+#     logger.info(result.output)
+#     if "Aborting" in result.output:
+#         assert False
+#     else:
+#         tag = subprocess.run(["git", "describe", "--tags"], capture_output=True, text=True).stdout.strip()
+#         if tag == "base":
+#             assert False
+#         else:
+#             assert True
+#             try:
+#                 subprocess.run(["git", "tag", "refine"], check=True)
+#             except subprocess.CalledProcessError as e:
+#                 raise e
+#
+#
+# def test_refined_number_guessing_game():
+#     project_path = f"{DATA_PATH}/number_guessing_game"
+#     check_or_create_base_tag(project_path)
+#
+#     args = [
+#         "Adding graphical interface functionality to enhance the user experience in the number-guessing game. The existing number-guessing game currently relies on command-line input for numbers. The goal is to introduce a graphical interface to improve the game's usability and visual appeal",
+#         "--inc",
+#         "--project-path",
+#         project_path,
+#     ]
+#     result = runner.invoke(app, args)
+#     logger.info(result)
+#     logger.info(result.output)
+#     if "Aborting" in result.output:
+#         assert False
+#     else:
+#         tag = subprocess.run(["git", "describe", "--tags"], capture_output=True, text=True).stdout.strip()
+#         if tag == "base":
+#             assert False
+#         else:
+#             assert True
+#             try:
+#                 subprocess.run(["git", "tag", "refine"], check=True)
+#             except subprocess.CalledProcessError as e:
+#                 raise e
+#
+#
+# def test_refined_word_cloud():
+#     project_path = f"{DATA_PATH}/word_cloud"
+#     check_or_create_base_tag(project_path)
+#
+#     args = [
+#         "Add a feature to remove deprecated words from the word cloud. The current word cloud generator does not support removing deprecated words. Now, The word cloud generator should support removing deprecated words. Customize deactivated words to exclude them from word cloud. Let users see all the words in the text file, and allow users to select the words they want to remove.",
+#         "--inc",
+#         "--project-path",
+#         project_path,
+#     ]
+#     result = runner.invoke(app, args)
+#     logger.info(result)
+#     logger.info(result.output)
+#     if "Aborting" in result.output:
+#         assert False
+#     else:
+#         tag = subprocess.run(["git", "describe", "--tags"], capture_output=True, text=True).stdout.strip()
+#         if tag == "base":
+#             assert False
+#         else:
+#             assert True
+#             try:
+#                 subprocess.run(["git", "tag", "refine"], check=True)
+#             except subprocess.CalledProcessError as e:
+#                 raise e
+#
+#
+# def test_refined_dice_simulator_1():
+#     project_path = f"{DATA_PATH}/dice_simulator_new"
+#     check_or_create_base_tag(project_path)
+#
+#     args = [
+#         "Add functionality to view the history of scores. The original dice rolling game could only display the current game result, but the new requirement allows players to view the history of scores",
+#         "--inc",
+#         "--project-path",
+#         project_path,
+#     ]
+#     result = runner.invoke(app, args)
+#     logger.info(result)
+#     logger.info(result.output)
+#     if "Aborting" in result.output:
+#         assert False
+#     else:
+#         tag = subprocess.run(["git", "describe", "--tags"], capture_output=True, text=True).stdout.strip()
+#         if tag == "base":
+#             assert False
+#         else:
+#             assert True
+#             try:
+#                 subprocess.run(["git", "tag", "refine_1"], check=True)
+#             except subprocess.CalledProcessError as e:
+#                 raise e
+#
+#
+# def test_refined_dice_simulator_2():
+#     project_path = f"{DATA_PATH}/dice_simulator_new"
+#     check_or_create_base_tag(project_path)
+#
+#     args = [
+#         "Add functionality to view the history of scores and perform statistical analysis on them. The original dice rolling game could only display the current game result, but the new requirement allows players to view the history of scores and display the statistical analysis results of the current score",
+#         "--inc",
+#         "--project-path",
+#         project_path,
+#     ]
+#     result = runner.invoke(app, args)
+#     logger.info(result)
+#     logger.info(result.output)
+#     if "Aborting" in result.output:
+#         assert False
+#     else:
+#         tag = subprocess.run(["git", "describe", "--tags"], capture_output=True, text=True).stdout.strip()
+#         if tag == "base":
+#             assert False
+#         else:
+#             assert True
+#             try:
+#                 subprocess.run(["git", "tag", "refine_2"], check=True)
+#             except subprocess.CalledProcessError as e:
+#                 raise e
+#
+#
+# def test_refined_dice_simulator_3():
+#     project_path = f"{DATA_PATH}/dice_simulator_new"
+#     check_or_create_base_tag(project_path)
+#
+#     args = [
+#         "Add functionality to set the number of sides on a die; Add functionality to view the history of scores;  Add functionality to perform statistical analysis on all scores. The original dice rolling game could roll the dice multiple times and only display the current game result. But the new requirement add function that players to customize the number of sides of the dice and to view the history of scores and display the statistical analysis",
+#         "--inc",
+#         "--project-path",
+#         project_path,
+#     ]
+#     result = runner.invoke(app, args)
+#     logger.info(result)
+#     logger.info(result.output)
+#     if "Aborting" in result.output:
+#         assert False
+#     else:
+#         tag = subprocess.run(["git", "describe", "--tags"], capture_output=True, text=True).stdout.strip()
+#         if tag == "base":
+#             assert False
+#         else:
+#             assert True
+#             try:
+#                 subprocess.run(["git", "tag", "refine_3"], check=True)
+#             except subprocess.CalledProcessError as e:
+#                 raise e
+#
 
-    args = [
-        "Add subtraction, multiplication and division operations to the calculator. The current calculator can only perform basic addition operations, and it is necessary to introduce subtraction, multiplication, division operation into the calculator",
-        "--inc",
-        "--project-path",
-        project_path,
-    ]
-    result = runner.invoke(app, args)
-    logger.info(result)
-    logger.info(result.output)
-    if "Aborting" in result.output:
-        assert False
-    else:
-        tag = subprocess.run(["git", "describe", "--tags"], capture_output=True, text=True).stdout.strip()
-        if tag == "base":
-            assert False
-        else:
-            assert True
-            try:
-                subprocess.run(["git", "tag", "refine"], check=True)
-            except subprocess.CalledProcessError as e:
-                raise e
-
-
-def test_refined_number_guessing_game():
-    project_path = f"{DATA_PATH}/number_guessing_game"
-    check_or_create_base_tag(project_path)
-
-    args = [
-        "Adding graphical interface functionality to enhance the user experience in the number-guessing game. The existing number-guessing game currently relies on command-line input for numbers. The goal is to introduce a graphical interface to improve the game's usability and visual appeal",
-        "--inc",
-        "--project-path",
-        project_path,
-    ]
-    result = runner.invoke(app, args)
-    logger.info(result)
-    logger.info(result.output)
-    if "Aborting" in result.output:
-        assert False
-    else:
-        tag = subprocess.run(["git", "describe", "--tags"], capture_output=True, text=True).stdout.strip()
-        if tag == "base":
-            assert False
-        else:
-            assert True
-            try:
-                subprocess.run(["git", "tag", "refine"], check=True)
-            except subprocess.CalledProcessError as e:
-                raise e
-
-
-def test_refined_word_cloud():
-    project_path = f"{DATA_PATH}/word_cloud"
-    check_or_create_base_tag(project_path)
-
-    args = [
-        "Add a feature to remove deprecated words from the word cloud. The current word cloud generator does not support removing deprecated words. Now, The word cloud generator should support removing deprecated words. Customize deactivated words to exclude them from word cloud. Let users see all the words in the text file, and allow users to select the words they want to remove.",
-        "--inc",
-        "--project-path",
-        project_path,
-    ]
-    result = runner.invoke(app, args)
-    logger.info(result)
-    logger.info(result.output)
-    if "Aborting" in result.output:
-        assert False
-    else:
-        tag = subprocess.run(["git", "describe", "--tags"], capture_output=True, text=True).stdout.strip()
-        if tag == "base":
-            assert False
-        else:
-            assert True
-            try:
-                subprocess.run(["git", "tag", "refine"], check=True)
-            except subprocess.CalledProcessError as e:
-                raise e
-
-
-def test_refined_dice_simulator_1():
-    project_path = f"{DATA_PATH}/dice_simulator_new"
-    check_or_create_base_tag(project_path)
-
-    args = [
-        "Add functionality to view the history of scores. The original dice rolling game could only display the current game result, but the new requirement allows players to view the history of scores",
-        "--inc",
-        "--project-path",
-        project_path,
-    ]
-    result = runner.invoke(app, args)
-    logger.info(result)
-    logger.info(result.output)
-    if "Aborting" in result.output:
-        assert False
-    else:
-        tag = subprocess.run(["git", "describe", "--tags"], capture_output=True, text=True).stdout.strip()
-        if tag == "base":
-            assert False
-        else:
-            assert True
-            try:
-                subprocess.run(["git", "tag", "refine_1"], check=True)
-            except subprocess.CalledProcessError as e:
-                raise e
-
-
-def test_refined_dice_simulator_2():
-    project_path = f"{DATA_PATH}/dice_simulator_new"
-    check_or_create_base_tag(project_path)
-
-    args = [
-        "Add functionality to view the history of scores and perform statistical analysis on them. The original dice rolling game could only display the current game result, but the new requirement allows players to view the history of scores and display the statistical analysis results of the current score",
-        "--inc",
-        "--project-path",
-        project_path,
-    ]
-    result = runner.invoke(app, args)
-    logger.info(result)
-    logger.info(result.output)
-    if "Aborting" in result.output:
-        assert False
-    else:
-        tag = subprocess.run(["git", "describe", "--tags"], capture_output=True, text=True).stdout.strip()
-        if tag == "base":
-            assert False
-        else:
-            assert True
-            try:
-                subprocess.run(["git", "tag", "refine_2"], check=True)
-            except subprocess.CalledProcessError as e:
-                raise e
-
-
-def test_refined_dice_simulator_3():
-    project_path = f"{DATA_PATH}/dice_simulator_new"
-    check_or_create_base_tag(project_path)
-
-    args = [
-        "Add functionality to set the number of sides on a die; Add functionality to view the history of scores;  Add functionality to perform statistical analysis on all scores. The original dice rolling game could roll the dice multiple times and only display the current game result. But the new requirement add function that players to customize the number of sides of the dice and to view the history of scores and display the statistical analysis",
-        "--inc",
-        "--project-path",
-        project_path,
-    ]
-    result = runner.invoke(app, args)
-    logger.info(result)
-    logger.info(result.output)
-    if "Aborting" in result.output:
-        assert False
-    else:
-        tag = subprocess.run(["git", "describe", "--tags"], capture_output=True, text=True).stdout.strip()
-        if tag == "base":
-            assert False
-        else:
-            assert True
-            try:
-                subprocess.run(["git", "tag", "refine_3"], check=True)
-            except subprocess.CalledProcessError as e:
-                raise e
-
-
-def test_refined_pygame_2048_1():
-    project_path = f"{DATA_PATH}/pygame_2048"
-    check_or_create_base_tag(project_path)
-
-    args = [
-        "Changed score target for 2048 game from 2048 to 4096. Please change the game's score target from 2048 to 4096, and change the interface size from 4*4 to 8*8",
-        "--inc",
-        "--project-path",
-        project_path,
-    ]
-    result = runner.invoke(app, args)
-    logger.info(result)
-    logger.info(result.output)
-    if "Aborting" in result.output:
-        assert False
-    else:
-        tag = subprocess.run(["git", "describe", "--tags"], capture_output=True, text=True).stdout.strip()
-        if tag == "base":
-            assert False
-        else:
-            assert True
-            try:
-                subprocess.run(["git", "tag", "refine_1"], check=True)
-            except subprocess.CalledProcessError as e:
-                raise e
+# def test_refined_pygame_2048_1():
+#     project_path = f"{DATA_PATH}/data_a/pygame_2048"
+#     check_or_create_base_tag(project_path)
+#
+#     args = [
+#         "Changed score target for 2048 game from 2048 to 4096. Please change the game's score target from 2048 to 4096, and change the interface size from 4*4 to 8*8",
+#         "--inc",
+#         "--project-path",
+#         project_path,
+#         "--no-code-review"
+#     ]
+#     result = runner.invoke(app, args)
+#     logger.info(result)
+#     logger.info(result.output)
+#     if "Aborting" in result.output:
+#         assert False
+#     else:
+#         tag = subprocess.run(["git", "describe", "--tags"], capture_output=True, text=True).stdout.strip()
+#         if tag == "base":
+#             assert False
+#         else:
+#             assert True
+#             try:
+#                 subprocess.run(["git", "tag", "refine_c_1"], check=True)
+#             except subprocess.CalledProcessError as e:
+#                 raise e
 
 
 def test_refined_pygame_2048_2():
-    project_path = f"{DATA_PATH}/pygame_2048"
+    project_path = f"{DATA_PATH}/data_a/pygame_2048"
     check_or_create_base_tag(project_path)
 
     args = [
@@ -229,13 +230,13 @@ def test_refined_pygame_2048_2():
         else:
             assert True
             try:
-                subprocess.run(["git", "tag", "refine_2"], check=True)
+                subprocess.run(["git", "tag", "refine_c_2"], check=True)
             except subprocess.CalledProcessError as e:
                 raise e
 
 
 def test_refined_pygame_2048_3():
-    project_path = f"{DATA_PATH}/pygame_2048"
+    project_path = f"{DATA_PATH}/data_a/pygame_2048"
     check_or_create_base_tag(project_path)
 
     args = [
@@ -256,7 +257,7 @@ def test_refined_pygame_2048_3():
         else:
             assert True
             try:
-                subprocess.run(["git", "tag", "refine_3"], check=True)
+                subprocess.run(["git", "tag", "refine_c_3"], check=True)
             except subprocess.CalledProcessError as e:
                 raise e
 

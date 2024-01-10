@@ -309,7 +309,7 @@ class Engineer(Role):
         # Code directly modified by the user.
         dependency = await CONFIG.git_repo.get_dependency()
         for filename in changed_src_files:
-            if filename in changed_files.docs:
+            if filename in changed_files.docs or filename == "increment.json":
                 continue
             coding_doc = await self._new_coding_doc(
                 filename=filename,

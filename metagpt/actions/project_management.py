@@ -15,12 +15,20 @@ from typing import Optional
 
 from metagpt.actions import ActionOutput
 from metagpt.actions.action import Action
-from metagpt.actions.project_management_an import PM_NODE
+from metagpt.actions.project_management_an import (
+    INC_PM_CONTEXT,
+    INCREMENTAL_PM_NODES,
+    MERGE_PM_CONTEXT,
+    PM_NODE,
+    REFINED_PM_NODES,
+)
 
 # from metagpt.actions.project_management_an import REFINED_PM_NODES
 from metagpt.config import CONFIG
 from metagpt.const import (
+    DOCS_FILE_REPO,
     PACKAGE_REQUIREMENTS_FILENAME,
+    REQUIREMENT_FILENAME,
     SYSTEM_DESIGN_FILE_REPO,
     TASK_FILE_REPO,
     TASK_PDF_FILE_REPO,
@@ -52,6 +60,8 @@ class WriteTasks(Action):
         # Rewrite the system designs that have undergone changes based on the git head diff under
         # `docs/system_designs/`.
         for filename in changed_system_designs:
+            if filename == "increment.json":
+                continue
             task_doc = await self._update_tasks(
                 filename=filename, system_design_file_repo=system_design_file_repo, tasks_file_repo=tasks_file_repo
             )
@@ -59,7 +69,7 @@ class WriteTasks(Action):
 
         # Rewrite the task files that have undergone changes based on the git head diff under `docs/tasks/`.
         for filename in changed_tasks:
-            if filename in change_files.docs:
+            if filename in change_files.docs or filename == "increment.json":
                 continue
             task_doc = await self._update_tasks(
                 filename=filename, system_design_file_repo=system_design_file_repo, tasks_file_repo=tasks_file_repo
@@ -74,9 +84,12 @@ class WriteTasks(Action):
 
     async def _update_tasks(self, filename, system_design_file_repo, tasks_file_repo):
         system_design_doc = await system_design_file_repo.get(filename)
+        design_increment = await system_design_file_repo.get("increment.json")
         task_doc = await tasks_file_repo.get(filename)
         if task_doc:
-            task_doc = await self._merge(system_design_doc=system_design_doc, task_doc=task_doc)
+            task_doc = await self._merge(
+                design_increment=design_increment, task_doc=task_doc, tasks_file_repo=tasks_file_repo
+            )
         else:
             rsp = await self._run_new_tasks(context=system_design_doc.content)
             task_doc = Document(
@@ -93,12 +106,26 @@ class WriteTasks(Action):
         node = await PM_NODE.fill(context, self.llm, schema)
         return node
 
-    async def _merge(self, system_design_doc, task_doc, schema=CONFIG.prompt_schema) -> Document:
-        context = NEW_REQ_TEMPLATE.format(context=system_design_doc.content, old_tasks=task_doc.content)
-        # node = await REFINED_PM_NODES.fill(context, self.llm, schema)
-        node = await PM_NODE.fill(context, self.llm, schema)
+    async def _merge(self, design_increment, task_doc, tasks_file_repo, schema=CONFIG.prompt_schema) -> Document:
+        docs_file_repo = CONFIG.git_repo.new_file_repository(DOCS_FILE_REPO)
+        requirement_doc = await docs_file_repo.get(REQUIREMENT_FILENAME)
+
+        tasks_increment = await self.get_increment(design_increment, requirement_doc, task_doc)
+        await tasks_file_repo.save(filename="increment.json", content=tasks_increment)
+        context = MERGE_PM_CONTEXT.format(
+            requirements=requirement_doc.content, old_tasks=task_doc.content, tasks_increment=tasks_increment
+        )
+        node = await REFINED_PM_NODES.fill(context, self.llm, schema)
         task_doc.content = node.instruct_content.model_dump_json()
         return task_doc
+
+    async def get_increment(self, design_increment, requirement_doc, task_doc):
+        context = INC_PM_CONTEXT.format(
+            requirements=requirement_doc.content, design_increment=design_increment, old_tasks=task_doc.content
+        )
+        node = await INCREMENTAL_PM_NODES.fill(context, self.llm)
+        task_increment = node.instruct_content.model_dump_json()
+        return task_increment
 
     @staticmethod
     async def _update_requirements(doc):

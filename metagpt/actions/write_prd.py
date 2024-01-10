@@ -21,7 +21,10 @@ from metagpt.actions import Action, ActionOutput
 from metagpt.actions.action_node import ActionNode
 from metagpt.actions.fix_bug import FixBug
 from metagpt.actions.write_prd_an import (  # REFINE_PRD_NODE,; REFINE_PRD_TEMPLATE,
+    INCREMENTAL_PRD_NODE,
     PROJECT_NAME,
+    REFINE_PRD_NODE,
+    REFINE_PRD_TEMPLATE,
     WP_IS_RELATIVE_NODE,
     WP_ISSUE_TYPE_NODE,
     WRITE_PRD_NODE,
@@ -129,20 +132,30 @@ class WritePRD(Action):
         node = await WP_IS_RELATIVE_NODE.fill(context, self.llm)
         return node.get("is_relative") == "YES"
 
-    async def _merge(self, new_requirement_doc, prd_doc, schema=CONFIG.prompt_schema) -> Document:
+    async def _merge(self, new_requirement_doc, prd_doc, prds_file_repo, schema=CONFIG.prompt_schema) -> Document:
         if not CONFIG.project_name:
             CONFIG.project_name = Path(CONFIG.project_path).name
-        # prompt = REFINE_PRD_TEMPLATE.format(
-        #     requirements=new_requirement_doc.content,
-        #     old_prd=prd_doc.content,
-        #     project_name=CONFIG.project_name,
-        # )
-        # node = await REFINE_PRD_NODE.fill(context=prompt, llm=self.llm, schema=schema)
-        prompt = NEW_REQ_TEMPLATE.format(requirements=new_requirement_doc.content, old_prd=prd_doc.content)
-        node = await WRITE_PRD_NODE.fill(context=prompt, llm=self.llm, schema=schema)
+
+        prd_increment = await self.get_increment(new_requirement_doc, prd_doc, schema)
+        await prds_file_repo.save(filename="increment.json", content=prd_increment)
+        project_name = CONFIG.project_name if CONFIG.project_name else ""
+        context = REFINE_PRD_TEMPLATE.format(
+            requirements=new_requirement_doc.content,
+            prd_increment=prd_increment,
+            old_prd=prd_doc.content,
+            project_name=project_name,
+        )
+        node = await REFINE_PRD_NODE.fill(context=context, llm=self.llm, schema=schema)
         prd_doc.content = node.instruct_content.model_dump_json()
         await self._rename_workspace(node)
+
         return prd_doc
+
+    async def get_increment(self, new_requirement_doc, prd_doc, schema) -> str:
+        prompt = NEW_REQ_TEMPLATE.format(requirements=new_requirement_doc.content, old_prd=prd_doc.content)
+        node = await INCREMENTAL_PRD_NODE.fill(context=prompt, llm=self.llm, schema=schema)
+        prd_increment = node.instruct_content.model_dump_json()
+        return prd_increment
 
     async def _update_prd(self, requirement_doc, prd_doc, prds_file_repo, *args, **kwargs) -> Document | None:
         if not prd_doc:
@@ -155,7 +168,7 @@ class WritePRD(Action):
                 content=prd.instruct_content.model_dump_json(),
             )
         elif await self._is_relative(requirement_doc, prd_doc):
-            new_prd_doc = await self._merge(requirement_doc, prd_doc)
+            new_prd_doc = await self._merge(requirement_doc, prd_doc, prds_file_repo)
         else:
             return None
         await prds_file_repo.save(filename=new_prd_doc.filename, content=new_prd_doc.content)
