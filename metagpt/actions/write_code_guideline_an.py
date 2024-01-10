@@ -358,14 +358,11 @@ class Interface:
 
 REFINED_CODE_TEMPLATE = """
 NOTICE
-Role: You are a professional engineer; The main goal is to complete incremental development by combining legacy code and Incremental Change, ensuring the integration of new features.
+Role: You are a professional engineer; The main goal is to complete incremental development by combining legacy code, ensuring the integration of new features.
 
 # Context
 ## New Requirement
 {requirement}
-
-## Incremental Change
-{guideline}
 
 ## Design
 {design}
@@ -403,11 +400,10 @@ Role: You are a professional engineer; The main goal is to complete incremental 
 2. COMPLETE CODE: Your code will be part of the entire project, so please implement complete, reliable, reusable code snippets.
 3. Set default value: If there is any setting, ALWAYS SET A DEFAULT VALUE, ALWAYS USE STRONG TYPE AND EXPLICIT VARIABLE. AVOID circular import.
 4. Follow design: YOU MUST FOLLOW "Data structures and interfaces". DONT CHANGE ANY DESIGN. Do not use public member functions that do not exist in your design.
-5. Merge Incremental Change: If there is any Incremental Change, you must merge it into the code file.
 6. CAREFULLY CHECK THAT YOU DONT MISS ANY NECESSARY CLASS/FUNCTION IN THIS FILE.
 7. Before using a external variable/module, make sure you import it first.
 8. Write out EVERY CODE DETAIL, DON'T LEAVE TODO.
-9. Attention: If Legacy Code files contain "{filename} to be rewritten", you are required to merge the Incremental Change into the {filename} file when rewriting "{filename} to be rewritten".
+9. Attention: If Legacy Code files contain "{filename} to be rewritten"
 """
 
 GUIDE_NODES = [INCREMENTAL_CHANGE]

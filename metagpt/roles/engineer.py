@@ -161,11 +161,12 @@ class Engineer(Role):
         return None
 
     async def _act_write_code(self):
-        if CONFIG.inc:
-            code_guideline = await self._write_code_guideline()
-            changed_files = await self._act_sp_with_cr(review=self.use_code_review, guideline=code_guideline)
-        else:
-            changed_files = await self._act_sp_with_cr(review=self.use_code_review)
+        # if CONFIG.inc:
+        #     code_guideline = await self._write_code_guideline()
+        #     changed_files = await self._act_sp_with_cr(review=self.use_code_review, guideline=code_guideline)
+        # else:
+        #     changed_files = await self._act_sp_with_cr(review=self.use_code_review)
+        changed_files = await self._act_sp_with_cr(review=self.use_code_review)
         return Message(
             content="\n".join(changed_files),
             role=self.profile,
