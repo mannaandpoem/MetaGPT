@@ -217,6 +217,7 @@ def test_refined_pygame_2048_2():
         "--inc",
         "--project-path",
         project_path,
+        "--no-code-review",
     ]
     result = runner.invoke(app, args)
     logger.info(result)
@@ -279,11 +280,11 @@ def check_or_create_base_tag(project_path):
     if has_base_tag:
         logger.info("Base tag exists")
         # Switch to the 'base' branch if it exists
-        stash_cmd = ["git", "stash"]
-        switch_to_base_branch_cmd = ["git", "checkout", "-f", "base"]
         try:
-            subprocess.run(stash_cmd, check=True)
-            subprocess.run(switch_to_base_branch_cmd, check=True)
+            status = subprocess.run(["git", "status", "-s"], capture_output=True, text=True).stdout.strip()
+            if status:
+                subprocess.run(["git", "clean", "-df"])
+            subprocess.run(["git", "checkout", "-f", "base"], check=True)
             logger.info("Switched to base branch")
         except Exception as e:
             logger.error("Failed to switch to base branch")
