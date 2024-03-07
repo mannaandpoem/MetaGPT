@@ -297,7 +297,11 @@ class Engineer(Role):
     async def _new_code_actions(self, bug_fix=False):
         # Prepare file repos
         changed_src_files = self.project_repo.srcs.all_files if bug_fix else self.project_repo.srcs.changed_files
-        changed_task_files = self.project_repo.docs.task.changed_files
+        changed_task_files = (
+            self.project_repo.docs.task.changed_files
+            if not self.config.simple
+            else self.project_repo.docs.task.all_files
+        )
         changed_files = Documents()
         # Recode caused by upstream changes.
         for filename in changed_task_files:
