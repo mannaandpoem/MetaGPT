@@ -668,6 +668,7 @@ class BugFixContext(BaseContext):
 
 class CodePlanAndChangeContext(BaseModel):
     requirement: str = ""
+    task_list: List[str] = Field(default_factory=list)
     prd_filename: str = ""
     design_filename: str = ""
     task_filename: str = ""

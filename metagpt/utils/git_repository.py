@@ -63,7 +63,9 @@ class GitRepository:
         local_path = Path(local_path)
         if self.is_git_dir(local_path):
             self._repository = Repo(local_path)
-            self._gitignore_rules = parse_gitignore(full_path=str(local_path / ".gitignore"))
+            gitignore_path = Path(local_path / ".gitignore")
+            gitignore_path.touch()
+            self._gitignore_rules = parse_gitignore(full_path=gitignore_path)
             return
         if not auto_init:
             return

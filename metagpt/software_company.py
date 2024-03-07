@@ -21,6 +21,7 @@ def generate_repo(
     implement=True,
     project_name="",
     inc=False,
+    simple=False,
     project_path="",
     reqa_file="",
     max_auto_summarize_code=0,
@@ -38,7 +39,7 @@ def generate_repo(
     )
     from metagpt.team import Team
 
-    config.update_via_cli(project_path, project_name, inc, reqa_file, max_auto_summarize_code)
+    config.update_via_cli(project_path, project_name, inc, simple, reqa_file, max_auto_summarize_code)
     ctx = Context(config=config)
 
     if not recover_path:
@@ -81,6 +82,7 @@ def startup(
     implement: bool = typer.Option(default=True, help="Enable or disable code implementation."),
     project_name: str = typer.Option(default="", help="Unique project name, such as 'game_2048'."),
     inc: bool = typer.Option(default=False, help="Incremental mode. Use it to coop with existing repo."),
+    simple: bool = typer.Option(default=False, help="Simple incremental mode."),
     project_path: str = typer.Option(
         default="",
         help="Specify the directory path of the old version project to fulfill the incremental requirements.",
@@ -114,6 +116,7 @@ def startup(
         implement,
         project_name,
         inc,
+        simple,
         project_path,
         reqa_file,
         max_auto_summarize_code,

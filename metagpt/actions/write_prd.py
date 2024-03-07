@@ -19,6 +19,8 @@ from pathlib import Path
 from metagpt.actions import Action, ActionOutput
 from metagpt.actions.action_node import ActionNode
 from metagpt.actions.fix_bug import FixBug
+from metagpt.actions.project_management_an import REFINED_TASK_LIST, TASK_LIST
+from metagpt.actions.write_code_plan_and_change_an import WriteCodePlanAndChange
 from metagpt.actions.write_prd_an import (
     COMPETITIVE_QUADRANT_CHART,
     PROJECT_NAME,
@@ -33,7 +35,13 @@ from metagpt.const import (
     REQUIREMENT_FILENAME,
 )
 from metagpt.logs import logger
-from metagpt.schema import BugFixContext, Document, Documents, Message
+from metagpt.schema import (
+    BugFixContext,
+    CodePlanAndChangeContext,
+    Document,
+    Documents,
+    Message,
+)
 from metagpt.utils.common import CodeParser
 from metagpt.utils.file_repository import FileRepository
 from metagpt.utils.mermaid import mermaid_to_file
@@ -80,6 +88,8 @@ class WritePRD(Action):
 
         # if requirement is related to other documents, update them, otherwise create a new one
         if related_docs := await self.get_related_docs(req, docs):
+            if self.config.simple:
+                return await self._handle_requirement_update_simply(req, related_docs)
             logger.info(f"Requirement update detected: {req.content}")
             return await self._handle_requirement_update(req, related_docs)
         else:
@@ -113,6 +123,29 @@ class WritePRD(Action):
         await self._save_competitive_analysis(new_prd_doc)
         await self.repo.resources.prd.save_pdf(doc=new_prd_doc)
         return Documents.from_iterable(documents=[new_prd_doc]).to_action_output()
+
+    async def _handle_requirement_update_simply(self, req: Document, related_docs: list[Document]) -> Message:
+        for doc in related_docs:
+            task_doc = await self.repo.docs.task.get(filename=doc.filename)
+            m = json.loads(task_doc.content)
+            code_filenames = m.get(TASK_LIST.key, []) or m.get(REFINED_TASK_LIST.key, [])
+            code_plan_and_change_ctx = CodePlanAndChangeContext(requirement=req.content, task_list=code_filenames)
+            node = await WriteCodePlanAndChange(
+                i_context=code_plan_and_change_ctx, context=self.context, llm=self.llm
+            ).run()
+            code_plan_and_change = node.instruct_content.model_dump_json()
+            dependencies = {REQUIREMENT_FILENAME, task_doc.filename}
+            new_code_plan_and_change_doc = await self.repo.docs.code_plan_and_change.save(
+                filename=task_doc.filename, content=code_plan_and_change, dependencies=dependencies
+            )
+            await self.repo.resources.code_plan_and_change.save_pdf(doc=new_code_plan_and_change_doc)
+            return Message(
+                content=code_plan_and_change,
+                role="",
+                cause_by=WriteCodePlanAndChange,
+                send_to=self,
+                sent_from=self,
+            )
 
     async def _handle_requirement_update(self, req: Document, related_docs: list[Document]) -> ActionOutput:
         # ... requirement update logic ...

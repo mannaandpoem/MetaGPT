@@ -212,9 +212,9 @@ class WriteCodePlanAndChange(Action):
         task_doc = await self.repo.docs.task.get(filename=self.i_context.task_filename)
         context = CODE_PLAN_AND_CHANGE_CONTEXT.format(
             requirement=self.i_context.requirement,
-            prd=prd_doc.content,
-            design=design_doc.content,
-            task=task_doc.content,
+            prd=prd_doc.content if prd_doc else "",
+            design=design_doc.content if design_doc else "",
+            task=task_doc.content if task_doc else f"Task List: {self.i_context.task_list}",
             code=await self.get_old_codes(),
         )
         logger.info("Writing code plan and change..")
