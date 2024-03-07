@@ -143,8 +143,8 @@ class WritePRD(Action):
                 content=code_plan_and_change,
                 role="",
                 cause_by=WriteCodePlanAndChange,
-                send_to=self,
                 sent_from=self,
+                send_to="Alex",
             )
 
     async def _handle_requirement_update(self, req: Document, related_docs: list[Document]) -> ActionOutput:
