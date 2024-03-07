@@ -101,6 +101,8 @@ class SummarizeCode(Action):
         design_doc = await self.repo.docs.system_design.get(filename=design_pathname.name)
         task_pathname = Path(self.i_context.task_filename)
         task_doc = await self.repo.docs.task.get(filename=task_pathname.name)
+        if not design_doc or not task_doc:
+            return
         src_file_repo = self.repo.with_src_path(self.context.src_workspace).srcs
         code_blocks = []
         for filename in self.i_context.codes_filenames:

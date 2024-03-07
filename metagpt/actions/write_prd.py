@@ -134,9 +134,8 @@ class WritePRD(Action):
                 i_context=code_plan_and_change_ctx, context=self.context, llm=self.llm
             ).run()
             code_plan_and_change = node.instruct_content.model_dump_json()
-            dependencies = {REQUIREMENT_FILENAME, task_doc.filename}
             new_code_plan_and_change_doc = await self.repo.docs.code_plan_and_change.save(
-                filename=task_doc.filename, content=code_plan_and_change, dependencies=dependencies
+                filename=task_doc.filename, content=code_plan_and_change, dependencies={REQUIREMENT_FILENAME}
             )
             await self.repo.resources.code_plan_and_change.save_pdf(doc=new_code_plan_and_change_doc)
             return Message(

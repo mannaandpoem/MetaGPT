@@ -31,6 +31,7 @@ from metagpt.actions.summarize_code import SummarizeCode
 from metagpt.actions.write_code_plan_and_change_an import WriteCodePlanAndChange
 from metagpt.const import (
     CODE_PLAN_AND_CHANGE_FILE_REPO,
+    CODE_PLAN_AND_CHANGE_PDF_FILE_REPO,
     REQUIREMENT_FILENAME,
     SYSTEM_DESIGN_FILE_REPO,
     TASK_FILE_REPO,
@@ -132,6 +133,17 @@ class Engineer(Role):
             self.rc.memory.add(msg)
 
             changed_files.add(coding_context.code_doc.filename)
+        if self.config.inc and self.config.simple:
+            # delete all docs except the code plan and change
+            for filename in self.project_repo.docs.all_files:
+                if (
+                    not Path(filename).is_relative_to(CODE_PLAN_AND_CHANGE_FILE_REPO)
+                    and filename != REQUIREMENT_FILENAME
+                ):
+                    await self.project_repo.docs.delete(filename)
+            for filename in self.project_repo.resources.all_files:
+                if not Path(filename).is_relative_to(CODE_PLAN_AND_CHANGE_PDF_FILE_REPO):
+                    await self.project_repo.resources.delete(filename)
         if not changed_files:
             logger.info("Nothing has changed.")
         return changed_files
@@ -297,11 +309,10 @@ class Engineer(Role):
     async def _new_code_actions(self, bug_fix=False):
         # Prepare file repos
         changed_src_files = self.project_repo.srcs.all_files if bug_fix else self.project_repo.srcs.changed_files
-        changed_task_files = (
-            self.project_repo.docs.task.changed_files
-            if not self.config.simple
-            else self.project_repo.docs.task.all_files
-        )
+        if self.config.simple and self.config.inc:
+            changed_task_files = self.project_repo.docs.task.all_files
+        else:
+            changed_task_files = self.project_repo.docs.task.changed_files
         changed_files = Documents()
         # Recode caused by upstream changes.
         for filename in changed_task_files:
