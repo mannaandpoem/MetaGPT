@@ -42,7 +42,7 @@ class ExecuteNbCode(Action):
         timeout=600,
     ):
         super().__init__(
-            nb=nb,
+            nb=nbformat.v4.new_notebook(),#nb,
             nb_client=NotebookClient(nb, timeout=timeout),
             timeout=timeout,
             console=Console(),
